@@ -553,25 +553,25 @@ is_uncached_acl(struct posix_acl *acl)
 struct inode {
 	umode_t			i_mode;
 	unsigned short		i_opflags;
-	kuid_t			i_uid;
-	kgid_t			i_gid;
-	unsigned int		i_flags;
+	kuid_t			i_uid;		/* 使用者id */
+	kgid_t			i_gid;		/* 使用者组id */
+	unsigned int		i_flags; /* 文件系统的安装标志 */
 
 #ifdef CONFIG_FS_POSIX_ACL
 	struct posix_acl	*i_acl;
 	struct posix_acl	*i_default_acl;
 #endif
 
-	const struct inode_operations	*i_op;
-	struct super_block	*i_sb;
-	struct address_space	*i_mapping;
+	const struct inode_operations	*i_op; /* 索引节点操作函数 */
+	struct super_block	*i_sb;			   /* 指向该a问津系统超级块的指针 */
+	struct address_space	*i_mapping;	   /* 把所有可交换的页面管理起来 */
 
 #ifdef CONFIG_SECURITY
 	void			*i_security;
 #endif
 
 	/* Stat data, not accessed from path walking */
-	unsigned long		i_ino;
+	unsigned long		i_ino;	/* 节点号 */
 	/*
 	 * Filesystems may only read i_nlink directly.  They shall use the
 	 * following functions for modification:
@@ -580,31 +580,31 @@ struct inode {
 	 *    inode_(inc|dec)_link_count
 	 */
 	union {
-		const unsigned int i_nlink;
+		const unsigned int i_nlink; /* 硬链接数 */
 		unsigned int __i_nlink;
 	};
-	dev_t			i_rdev;
+	dev_t			i_rdev;		/* 实际设备标识号 */
 	loff_t			i_size;
-	struct timespec		i_atime;
-	struct timespec		i_mtime;
-	struct timespec		i_ctime;
+	struct timespec		i_atime; /* 最后访问时间 */
+	struct timespec		i_mtime; /* 最后修改时间 */
+	struct timespec		i_ctime; /* 最后改变时间 */
 	spinlock_t		i_lock;	/* i_blocks, i_bytes, maybe i_size */
 	unsigned short          i_bytes;
-	unsigned int		i_blkbits;
-	blkcnt_t		i_blocks;
+	unsigned int		i_blkbits; /* 块的位数 */
+	blkcnt_t		i_blocks;	   /* 该文件所占块数 */
 
 #ifdef __NEED_I_SIZE_ORDERED
 	seqcount_t		i_size_seqcount;
 #endif
 
 	/* Misc */
-	unsigned long		i_state;
+	unsigned long		i_state; /* 索引节点的状态标志 */
 	struct rw_semaphore	i_rwsem;
 
 	unsigned long		dirtied_when;	/* jiffies of first dirtying */
 	unsigned long		dirtied_time_when;
 
-	struct hlist_node	i_hash;
+	struct hlist_node	i_hash;	   /* 散列表，用户快速查找inode */
 	struct list_head	i_io_list;	/* backing dev IO list */
 #ifdef CONFIG_CGROUP_WRITEBACK
 	struct bdi_writeback	*i_wb;		/* the associated cgroup wb */
@@ -621,21 +621,21 @@ struct inode {
 		struct hlist_head	i_dentry;
 		struct rcu_head		i_rcu;
 	};
-	u64			i_version;
+	u64			i_version;		/* 版本号 */
 	atomic_t		i_count;
 	atomic_t		i_dio_count;
-	atomic_t		i_writecount;
+	atomic_t		i_writecount; /* 写进程的引用计数 */
 #ifdef CONFIG_IMA
 	atomic_t		i_readcount; /* struct files open RO */
 #endif
 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
 	struct file_lock_context	*i_flctx;
-	struct address_space	i_data;
-	struct list_head	i_devices;
+	struct address_space	i_data; /* 设备地址映射 */
+	struct list_head	i_devices;	/* 设备文件形成的链表 */
 	union {
-		struct pipe_inode_info	*i_pipe;
-		struct block_device	*i_bdev;
-		struct cdev		*i_cdev;
+		struct pipe_inode_info	*i_pipe; /* 指向管道文件 */
+		struct block_device	*i_bdev; /* 指向块设备文件的指针 */
+		struct cdev		*i_cdev;	 /* 指向字符设备文件的指针 */
 		char			*i_link;
 		unsigned		i_dir_seq;
 	};
@@ -828,19 +828,19 @@ static inline int ra_has_index(struct file_ra_state *ra, pgoff_t index)
 
 struct file {
 	union {
-		struct llist_node	fu_llist;
-		struct rcu_head 	fu_rcuhead;
+		struct llist_node	fu_llist; /* 文件对象列表 */
+		struct rcu_head 	fu_rcuhead; /* 释放之后的RCU链表 */
 	} f_u;
-	struct path		f_path;
+	struct path		f_path;		  /* 包含的目录项 */
 	struct inode		*f_inode;	/* cached value */
-	const struct file_operations	*f_op;
+	const struct file_operations	*f_op; /* 文件操作函数 */
 
 	/*
 	 * Protects f_ep_links, f_flags.
 	 * Must not be taken from IRQ context.
 	 */
 	spinlock_t		f_lock;
-	atomic_long_t		f_count;
+	atomic_long_t		f_count; /* 文件对象引用计数 */
 	unsigned int 		f_flags;
 	fmode_t			f_mode;
 	struct mutex		f_pos_lock;
@@ -1285,22 +1285,23 @@ struct sb_writers {
 };
 
 struct super_block {
-	struct list_head	s_list;		/* Keep this first */
+	struct list_head	s_list;		/* Keep this first, 指向所有超级块的链表 */
+	/* 包含该具体文件系统的块设备标识符，例如:对于/dev/hda1, 其设备标识符为0x301 */
 	dev_t			s_dev;		/* search index; _not_ kdev_t */
-	unsigned char		s_blocksize_bits;
-	unsigned long		s_blocksize;
+	unsigned char		s_blocksize_bits; /* 块大小的值占用的位数，例如，如果块大小为1024字节，则该值为10？ */
+	unsigned long		s_blocksize; /* 该具体文件系统中数据块的大小，以字节为单位 */
 	loff_t			s_maxbytes;	/* Max file size */
 	struct file_system_type	*s_type;
-	const struct super_operations	*s_op;
-	const struct dquot_operations	*dq_op;
+	const struct super_operations	*s_op; /* 指向某个特定的具体文件系统的用于超级块操作的函数集合的指针 */
+	const struct dquot_operations	*dq_op; /* 指向磁盘限额方法的指针 */
 	const struct quotactl_ops	*s_qcop;
 	const struct export_operations *s_export_op;
 	unsigned long		s_flags;
 	unsigned long		s_iflags;	/* internal SB_I_* flags */
-	unsigned long		s_magic;
-	struct dentry		*s_root;
+	unsigned long		s_magic;	/* 魔数，即该具体文件系统区别于其它文件系统的一个标志 */
+	struct dentry		*s_root; /* 目录挂载点 */
 	struct rw_semaphore	s_umount;
-	int			s_count;
+	int			s_count;		/* 超级块引用计数 */
 	atomic_t		s_active;
 #ifdef CONFIG_SECURITY
 	void                    *s_security;
@@ -1313,7 +1314,7 @@ struct super_block {
 	struct list_head	s_mounts;	/* list of mounts; _not_ for fs use */
 	struct block_device	*s_bdev;
 	struct backing_dev_info *s_bdi;
-	struct mtd_info		*s_mtd;
+	struct mtd_info		*s_mtd;	/* 存储磁盘信息 */
 	struct hlist_node	s_instances;
 	unsigned int		s_quota_types;	/* Bitmask of supported quota types */
 	struct quota_info	s_dquot;	/* Diskquota specific options */
@@ -1325,7 +1326,7 @@ struct super_block {
 
 	void 			*s_fs_info;	/* Filesystem private info */
 	unsigned int		s_max_links;
-	fmode_t			s_mode;
+	fmode_t			s_mode;		/* 安装权限 */
 
 	/* Granularity of c/m/atime in ns.
 	   Cannot be worse than a second */
@@ -1644,8 +1645,11 @@ struct iov_iter;
 
 struct file_operations {
 	struct module *owner;
+	/* 用于更新偏移量指针， 由系统调用lseek()调用 */
 	loff_t (*llseek) (struct file *, loff_t, int);
+	/* 由系统调用read调用 */
 	ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+	/* 由系统调用write调用 */
 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
@@ -1654,8 +1658,11 @@ struct file_operations {
 	unsigned int (*poll) (struct file *, struct poll_table_struct *);
 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+	/* 将给定文件映射到指定的地址空间上，有系统调用mmap调用 */
 	int (*mmap) (struct file *, struct vm_area_struct *);
+	/* 创建一个新的文件对象，并将它和相应的索引节点对象关联起来 */
 	int (*open) (struct inode *, struct file *);
+	/* 当已打开文件的引用计数减少时，VFS调用该函数 */
 	int (*flush) (struct file *, fl_owner_t id);
 	int (*release) (struct inode *, struct file *);
 	int (*fsync) (struct file *, loff_t, loff_t, int datasync);
@@ -1683,14 +1690,16 @@ struct file_operations {
 };
 
 struct inode_operations {
+	/* 在特定文件夹中寻找索引节点，该索引节点要对应于dentry中给出的文件名 */
 	struct dentry * (*lookup) (struct inode *,struct dentry *, unsigned int);
 	const char * (*get_link) (struct dentry *, struct inode *, struct delayed_call *);
 	int (*permission) (struct inode *, int);
 	struct posix_acl * (*get_acl)(struct inode *, int);
 
 	int (*readlink) (struct dentry *, char __user *,int);
-
+	/* 为dentry对象创造一个新的索引节点 */
 	int (*create) (struct inode *,struct dentry *, umode_t, bool);
+	/* 创建硬链接 */
 	int (*link) (struct dentry *,struct inode *,struct dentry *);
 	int (*unlink) (struct inode *,struct dentry *);
 	int (*symlink) (struct inode *,struct dentry *,const char *);
@@ -1752,21 +1761,30 @@ static inline int do_clone_file_range(struct file *file_in, loff_t pos_in,
 }
 
 struct super_operations {
+	/* 创建和和初始化 一个索引节点对象 */
    	struct inode *(*alloc_inode)(struct super_block *sb);
+	/* 释放给定的索引节点 */
 	void (*destroy_inode)(struct inode *);
-
+	/* VFS在索引节点被修改时会调用这个函数 */
    	void (*dirty_inode) (struct inode *, int flags);
+	/* 将索引节点写入磁盘 */
 	int (*write_inode) (struct inode *, struct writeback_control *wbc);
+	/* 最后一个指向索引节点的引用被删除后，VFS会调用这个函数 */
 	int (*drop_inode) (struct inode *);
 	void (*evict_inode) (struct inode *);
+	/* 卸载文件系统时由VFS调用， 用来释放超级块 */
 	void (*put_super) (struct super_block *);
+	/* 使文件系统中的数据与磁盘上的数据同步 */
 	int (*sync_fs)(struct super_block *sb, int wait);
 	int (*freeze_super) (struct super_block *);
 	int (*freeze_fs) (struct super_block *);
 	int (*thaw_super) (struct super_block *);
 	int (*unfreeze_fs) (struct super_block *);
+	/* VFS调用该函数获取文件系统状态 */
 	int (*statfs) (struct dentry *, struct kstatfs *);
+	/* 指定新的安装选项重新安装文件系统时，VFS会调用此函数 */
 	int (*remount_fs) (struct super_block *, int *, char *);
+	/* VFS调用此函数终端安装操作 */
 	void (*umount_begin) (struct super_block *);
 
 	int (*show_options)(struct seq_file *, struct dentry *);
@@ -1992,10 +2010,10 @@ static inline void file_accessed(struct file *file)
 
 int sync_inode(struct inode *inode, struct writeback_control *wbc);
 int sync_inode_metadata(struct inode *inode, int wait);
-
+/* 每种文件系统，不管有多少个实例安装到系统中，还是根本没有安装到系统中，都只有一个file_system_type结构 */
 struct file_system_type {
-	const char *name;
-	int fs_flags;
+	const char *name;			/* 文件系统名称 */
+	int fs_flags;				/* 文件系统类型标志 */
 #define FS_REQUIRES_DEV		1 
 #define FS_BINARY_MOUNTDATA	2
 #define FS_HAS_SUBTYPE		4
@@ -2003,11 +2021,12 @@ struct file_system_type {
 #define FS_RENAME_DOES_D_MOVE	32768	/* FS will handle d_move() during rename() internally. */
 	struct dentry *(*mount) (struct file_system_type *, int,
 		       const char *, void *);
+	/* 终止访问超级块 */
 	void (*kill_sb) (struct super_block *);
-	struct module *owner;
-	struct file_system_type * next;
-	struct hlist_head fs_supers;
-
+	struct module *owner;		/* 文件系统模块 */
+	struct file_system_type * next; /* 链表中下一个文件系统类型 */
+	struct hlist_head fs_supers;	/* 超级块对象链表 */
+	/* 下面都是运行时的锁 */
 	struct lock_class_key s_lock_key;
 	struct lock_class_key s_umount_key;
 	struct lock_class_key s_vfs_rename_key;

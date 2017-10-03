@@ -82,20 +82,29 @@ extern struct dentry_stat_t dentry_stat;
 
 struct dentry {
 	/* RCU lookup touched fields */
+	/* 目录项标识 */
 	unsigned int d_flags;		/* protected by d_lock */
 	seqcount_t d_seq;		/* per dentry seqlock */
+	/* 散列表 */
 	struct hlist_bl_node d_hash;	/* lookup hash list */
+	/* 父目录的目录项对象 */
 	struct dentry *d_parent;	/* parent directory */
+	/* 目录项名称 */
 	struct qstr d_name;
+	/* 相关联的索引节点 */
 	struct inode *d_inode;		/* Where the name belongs to - NULL is
 					 * negative */
+	/* 短文件名 */
 	unsigned char d_iname[DNAME_INLINE_LEN];	/* small names */
 
 	/* Ref lookup also touches following */
 	struct lockref d_lockref;	/* per-dentry lock and refcount */
+	/* 目录项操作相关函数 */
 	const struct dentry_operations *d_op;
+	/* 文件的超级块 */
 	struct super_block *d_sb;	/* The root of the dentry tree */
 	unsigned long d_time;		/* used by d_revalidate */
+	/* 目录项树的根(即文件系统特有数据) */
 	void *d_fsdata;			/* fs-specific data */
 
 	union {
@@ -127,15 +136,20 @@ enum dentry_d_lock_class
 };
 
 struct dentry_operations {
+	/* 判断目录项对象是否有效，VFS准备从dcache中使用一个目录项时会调用这个函数 */
 	int (*d_revalidate)(struct dentry *, unsigned int);
 	int (*d_weak_revalidate)(struct dentry *, unsigned int);
+	/* 为目录项对象生成hash值 */
 	int (*d_hash)(const struct dentry *, struct qstr *);
 	int (*d_compare)(const struct dentry *,
 			unsigned int, const char *, const struct qstr *);
+	/* 当目录项对象的d_count为0时，VFS调用这个函数 */
 	int (*d_delete)(const struct dentry *);
 	int (*d_init)(struct dentry *);
+	/* 当目录项对象将要被释放时， VFS调用该函数 */
 	void (*d_release)(struct dentry *);
 	void (*d_prune)(struct dentry *);
+	/* 当目录项对象丢失其索引节点时(也就是磁盘索引节点被删除了),VFS会调用此函数 */
 	void (*d_iput)(struct dentry *, struct inode *);
 	char *(*d_dname)(struct dentry *, char *, int);
 	struct vfsmount *(*d_automount)(struct path *);

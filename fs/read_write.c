@@ -506,6 +506,7 @@ static ssize_t new_sync_write(struct file *filp, const char __user *buf, size_t 
 ssize_t __vfs_write(struct file *file, const char __user *p, size_t count,
 		    loff_t *pos)
 {
+	/* 调用具体的文件系统的方法 */
 	if (file->f_op->write)
 		return file->f_op->write(file, p, count, pos);
 	else if (file->f_op->write_iter)
@@ -603,8 +604,11 @@ SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf,
 	ssize_t ret = -EBADF;
 
 	if (f.file) {
+		//获取文件句柄的偏移
 		loff_t pos = file_pos_read(f.file);
+		//写文件，传递偏移量
 		ret = vfs_write(f.file, buf, count, &pos);
+		//更新偏移量
 		if (ret >= 0)
 			file_pos_write(f.file, pos);
 		fdput_pos(f);
