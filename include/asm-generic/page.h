@@ -47,11 +47,13 @@ typedef struct {
 } pgprot_t;
 typedef struct page *pgtable_t;
 
+/* 根据x把它转换成对应的无符号整型 */
 #define pte_val(x)	((x).pte)
 #define pmd_val(x)	((&x)->pmd[0])
 #define pgd_val(x)	((x).pgd)
 #define pgprot_val(x)	((x).pgprot)
 
+/* 下面几个宏把无符号整型转换成对应的类型 */
 #define __pte(x)	((pte_t) { (x) } )
 #define __pmd(x)	((pmd_t) { (x) } )
 #define __pgd(x)	((pgd_t) { (x) } )
@@ -74,8 +76,8 @@ extern unsigned long memory_end;
 
 #ifndef __ASSEMBLY__
 
-#define __va(x) ((void *)((unsigned long) (x)))
-#define __pa(x) ((unsigned long) (x))
+#define __va(x) ((void *)((unsigned long) (x))) /* 把物理地址转换为线性地址 */
+#define __pa(x) ((unsigned long) (x)) /* 把内核空间的线性地址转换为物理地址 */
 
 #define virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
 #define pfn_to_virt(pfn)	__va((pfn) << PAGE_SHIFT)
