@@ -1891,7 +1891,7 @@ static __latent_entropy struct task_struct *copy_process(
 			list_add_tail_rcu(&p->tasks, &init_task.tasks);
 			/* 将新进程描述符的pgid结构插入pgid_hash */
 			attach_pid(p, PIDTYPE_PGID);
-			/* /* 将新进程描述符的sid结构插入sid_hash */ */
+			/* 将新进程描述符的sid结构插入sid_hash */
 			attach_pid(p, PIDTYPE_SID);
 			/* 当前CPUh进程数+1 */
 			__this_cpu_inc(process_counts);
